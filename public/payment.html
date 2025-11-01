@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Payment / Confirmation - CarryLuxe</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <div class="container" style="padding-top:40px;text-align:center">
+    <h2>Thank you for your order</h2>
+    <p id="order-info">We have received your order. A confirmation was sent to your email (if provided).</p>
+    <div style="margin:24px 0">
+      <a id="wa-button" class="whatsapp-btn" target="_blank" rel="noopener noreferrer">
+        <span class="emoji">💬</span>
+        <span>Chat on WhatsApp</span>
+      </a>
+    </div>
+    <p style="color:#777;font-size:0.95rem">A CarryLuxe representative will contact you to confirm payment and delivery.</p>
+    <div style="margin-top:20px"><a href="/">← Back to shop</a></div>
+  </div>
+
+  <script>
+    // Read orderId from query and set WhatsApp link
+    (function(){
+      function qs(name){
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+      }
+      const orderId = qs('orderId');
+      const waNumber = '16188509790'; // +1 (618) 850-9790
+      const message = orderId ? `Hi, I have a question about order ${orderId}` : 'Hi, I have a question about my order';
+      const waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(message);
+      const btn = document.getElementById('wa-button');
+      btn.href = waUrl;
+    })();
+  </script>
+</body>
+</html>

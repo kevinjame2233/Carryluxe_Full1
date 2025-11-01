@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CarryLuxe – Luxury Bags</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="brand">CarryLuxe</div>
+    <nav class="nav">
+      <button id="btn-hermes" class="nav-btn">Hermès</button>
+      <button id="btn-lv" class="nav-btn">Louis Vuitton</button>
+      <a href="/admin.html" class="nav-link">Admin</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <img class="hero-img" src="/assets/images/hero1.jpg" alt="hero">
+    <div class="hero-overlay">
+      <h1>Curated Luxury, Carried with Elegance</h1>
+      <div class="hero-ctas">
+        <button id="hermes-btn" class="cta">Shop Hermès</button>
+        <button id="lv-btn" class="cta">Shop Louis Vuitton</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <h2>Collections</h2>
+    <div id="product-grid" class="grid"></div>
+  </main>
+
+  <div id="order-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Place Order</h3>
+      <form id="order-form">
+        <input type="hidden" name="productId" id="productId">
+        <input name="name" placeholder="Full name" required>
+        <input name="phone" placeholder="Phone" required>
+        <input name="email" placeholder="Email (optional)">
+        <textarea name="address" placeholder="Delivery address" required></textarea>
+        <div class="modal-actions">
+          <button type="button" id="cancel-order" class="btn">Cancel</button>
+          <button type="submit" class="btn primary">Submit Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="popup-container"></div>
+
+  <footer class="footer">© CarryLuxe • Demo</footer>
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>

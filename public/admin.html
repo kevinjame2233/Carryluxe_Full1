@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CarryLuxe Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Admin Login</h2>
+    <form id="login-form">
+      <input name="email" placeholder="Email" required>
+      <input name="password" placeholder="Password" type="password" required>
+      <button type="submit" class="btn primary">Login</button>
+    </form>
+
+    <div id="admin-area" class="hidden">
+      <h3>Products</h3>
+      <form id="product-form" enctype="multipart/form-data">
+        <label>Brand
+          <select name="brand" required>
+            <option value="Hermès">Hermès</option>
+            <option value="Louis Vuitton">Louis Vuitton</option>
+          </select>
+        </label>
+        <input name="name" placeholder="Product name" required>
+        <input name="price" placeholder="Price" required>
+        <textarea name="description" placeholder="Description"></textarea>
+        <label>Image (upload from device)
+          <input name="image" type="file" accept="image/*">
+        </label>
+        <small>Or provide additional image URLs (comma separated)</small>
+        <input name="images" placeholder="Optional: additional image URLs">
+        <button type="submit" class="btn">Save Product</button>
+      </form>
+
+      <h4>Existing Products</h4>
+      <div id="admin-products"></div>
+
+      <h4>Orders</h4>
+      <div id="admin-orders"></div>
+      <button id="logout" class="btn">Logout</button>
+    </div>
+  </div>
+  <script src="/assets/js/admin.js"></script>
+</body>
+</html>

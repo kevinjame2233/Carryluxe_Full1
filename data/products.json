@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "brand": "Hermès",
+    "name": "Birkin 30",
+    "price": 9500,
+    "currency": "USD",
+    "images": ["/assets/images/hermes-birkin.jpg"],
+    "description": "Classic Hermès Birkin 30"
+  },
+  {
+    "id": 2,
+    "brand": "Louis Vuitton",
+    "name": "Capucines MM",
+    "price": 6800,
+    "currency": "USD",
+    "images": ["/assets/images/lv-capucines.jpg"],
+    "description": "Elegant Louis Vuitton Capucines"
+  }
+]
