@@ -1,39 +1,179 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8">
-  <title>Payment / Confirmation - CarryLuxe</title>
+  <title>Checkout - CarryLuxe</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <style>
+    .checkout-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .product-summary {
+      display: flex;
+      gap: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+
+    .product-summary img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .success-message {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
+
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Checkout - CarryLuxe</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <style>
+    .checkout-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .product-summary {
+      display: flex;
+      gap: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+
+    .product-summary img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .success-message {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
 <body>
-  <div class="container" style="padding-top:40px;text-align:center">
-    <h2>Thank you for your order</h2>
-    <p id="order-info">We have received your order. A confirmation was sent to your email (if provided).</p>
-    <div style="margin:24px 0">
-      <a id="wa-button" class="whatsapp-btn" target="_blank" rel="noopener noreferrer">
-        <span class="emoji">💬</span>
-        <span>Chat on WhatsApp</span>
-      </a>
+  <header class="header">
+    <div class="brand">CarryLuxe</div>
+    <a href="/" style="color:white;text-decoration:none">Back to Shop</a>
+  </header>
+
+  <div class="container" style="margin-top:120px; max-width:800px">
+    <h2 class="section-title">Secure Checkout</h2>
+
+    <div class="checkout-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:40px">
+      <!-- Product Summary -->
+      <div class="order-summary" style="background:#111; padding:20px; border-radius:12px; border:1px solid #333">
+        <h3 style="color:var(--gold); margin-top:0">Order Summary</h3>
+        <div id="product-loading">Loading product...</div>
+        <div id="product-details" class="hidden">
+          <img id="p-img" src=""
+            style="width:100%; height:200px; object-fit:cover; border-radius:8px; margin-bottom:15px">
+          <h4 id="p-name" style="margin:0; font-size:1.2rem"></h4>
+          <div id="p-brand" style="color:#777; font-size:0.9rem; margin-bottom:10px"></div>
+          <div id="p-price" style="font-size:1.5rem; color:var(--gold); font-weight:bold"></div>
+        </div>
+      </div>
+
+      <!-- Checkout Form -->
+      <form id="payment-form">
+        <input type="hidden" name="productId" id="productId">
+
+        <div class="form-group">
+          <label>Full Name</label>
+          <input name="name" required placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input name="email" type="email" placeholder="john@example.com">
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input name="phone" required placeholder="+1 (555) 000-0000">
+        </div>
+
+        <div class="form-group">
+          <label>Delivery Address</label>
+          <textarea name="address" required rows="3" placeholder="Street, City, Zip Code"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Order Note (Optional)</label>
+          <textarea name="note" rows="2" placeholder="Special instructions..."></textarea>
+        </div>
+
+        <button type="submit" class="btn primary" style="width:100%; padding:15px; font-size:1.1rem; margin-top:20px">
+          Place Order
+        </button>
+      </form>
     </div>
-    <p style="color:#777;font-size:0.95rem">A CarryLuxe representative will contact you to confirm payment and delivery.</p>
-    <div style="margin-top:20px"><a href="/">← Back to shop</a></div>
   </div>
 
-  <script>
-    // Read orderId from query and set WhatsApp link
-    (function(){
-      function qs(name){
-        const params = new URLSearchParams(window.location.search);
-        return params.get(name);
-      }
-      const orderId = qs('orderId');
-      const waNumber = '16188509790'; // +1 (618) 850-9790
-      const message = orderId ? `Hi, I have a question about order ${orderId}` : 'Hi, I have a question about my order';
-      const waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(message);
-      const btn = document.getElementById('wa-button');
-      btn.href = waUrl;
-    })();
-  </script>
+  <!-- Success Modal -->
+  <div id="success-modal" class="modal">
+    <div class="modal-content" style="text-align:center; padding:40px; max-width:500px; display:block">
+      <h2 style="color:var(--gold); margin-top:0">Order Received!</h2>
+      <p style="color:#ccc; line-height:1.6; margin-bottom:30px">
+        Thank you for your order. Our admin will review it and contact you shortly with an invoice via Apple Pay, Zelle,
+        or Bank Transfer.
+      </p>
+      <a id="whatsapp-link" href="#" target="_blank" class="btn primary"
+        style="display:inline-block; text-decoration:none; background:#25D366; color:#fff; font-weight:bold">
+        Confirm on WhatsApp
+      </a>
+      <br><br>
+      <a href="/" style="color:#777; text-decoration:none; font-size:0.9rem">Return to Home</a>
+    </div>
+  </div>
+
+  <!-- Loader Overlay -->
+  <div id="loader" class="modal" style="background:rgba(0,0,0,0.9); z-index:3000">
+    <div style="color:var(--gold); font-size:1.5rem">Processing Order...</div>
+  </div>
+
+  <script src="/assets/js/payment.js"></script>
 </body>
+
 </html>

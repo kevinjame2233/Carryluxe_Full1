@@ -1,11 +1,13 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>CarryLuxe Admin</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
+
 <body>
   <div class="container">
     <h2>Admin Login</h2>
@@ -18,21 +20,47 @@
     <div id="admin-area" class="hidden">
       <h3>Products</h3>
       <form id="product-form" enctype="multipart/form-data">
-        <label>Brand
+        <input type="hidden" name="id" id="product-id">
+        <input type="hidden" name="existingImages" id="existing-images">
+
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" required>
+            <option value="active">Active (Visible)</option>
+            <option value="safe">Safe (Hidden)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Brand</label>
           <select name="brand" required>
             <option value="Hermès">Hermès</option>
             <option value="Louis Vuitton">Louis Vuitton</option>
+            <option value="Chanel">Chanel</option>
+            <option value="Dior">Dior</option>
+            <option value="Gucci">Gucci</option>
           </select>
-        </label>
+        </div>
+
         <input name="name" placeholder="Product name" required>
-        <input name="price" placeholder="Price" required>
-        <textarea name="description" placeholder="Description"></textarea>
-        <label>Image (upload from device)
-          <input name="image" type="file" accept="image/*">
-        </label>
+        <div style="display:flex;gap:10px">
+          <input name="price" placeholder="Price" type="number" required style="flex:1">
+          <input name="stock" placeholder="Stock" type="number" required style="flex:1" value="1">
+        </div>
+        <textarea name="description" placeholder="Description" rows="3"></textarea>
+
+        <div class="form-group">
+          <label>Images (Select up to 5)</label>
+          <input name="images" type="file" accept="image/*" multiple>
+        </div>
+
         <small>Or provide additional image URLs (comma separated)</small>
-        <input name="images" placeholder="Optional: additional image URLs">
-        <button type="submit" class="btn">Save Product</button>
+        <input name="imageUrls" placeholder="Optional: additional image URLs">
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="save-btn">Save Product</button>
+          <button type="button" class="btn hidden" id="cancel-edit">Cancel Edit</button>
+        </div>
       </form>
 
       <h4>Existing Products</h4>
@@ -45,4 +73,5 @@
   </div>
   <script src="/assets/js/admin.js"></script>
 </body>
+
 </html>

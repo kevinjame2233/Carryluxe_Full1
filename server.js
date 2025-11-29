@@ -24,7 +24,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https:"],
       styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "https:"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
@@ -37,14 +37,22 @@ app.use(helmet({
 }));
 
 // Rate limiter
-const limiter = rateLimit({ 
+const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, 
+  max: 100,
   message: "Too many requests from this IP, please try again after 15 minutes",
   standardHeaders: true,
   legacyHeaders: false
 });
 app.use('/api/', limiter); // Apply rate limiting to API routes only
+
+// Prevent caching for API routes
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 const DATA_DIR = path.join(__dirname, "data");
 const PRODUCTS_FILE = path.join(DATA_DIR, "products.json");
@@ -61,7 +69,7 @@ const fileFilter = (req, file, cb) => {
   if (file.mimetype && file.mimetype.startsWith('image/')) return cb(null, true);
   cb(new Error('Only image files are allowed!'), false);
 };
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024, files: 1 }, fileFilter });
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024, files: 5 }, fileFilter }); // Allow up to 5 files
 
 // configure cloudinary if env provided
 if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) {
@@ -87,18 +95,22 @@ async function ensureData() {
         "brand": "Hermès",
         "name": "Birkin 30",
         "price": 9500,
+        "stock": 1,
         "currency": "USD",
         "images": ["/assets/images/hermes-birkin.jpg"],
-        "description": "Classic Hermès Birkin 30"
+        "description": "Classic Hermès Birkin 30",
+        "status": "active"
       },
       {
         "id": 2,
         "brand": "Louis Vuitton",
         "name": "Capucines MM",
         "price": 6800,
+        "stock": 1,
         "currency": "USD",
         "images": ["/assets/images/lv-capucines.jpg"],
-        "description": "Elegant Louis Vuitton Capucines"
+        "description": "Elegant Louis Vuitton Capucines",
+        "status": "active"
       }
     ];
     await fs.writeFile(PRODUCTS_FILE, JSON.stringify(sample, null, 2));
@@ -113,15 +125,15 @@ async function ensureData() {
 ensureData();
 
 // create admin from env if provided and admin not set
-(async function ensureAdminFromEnv(){
-  try{
+(async function ensureAdminFromEnv() {
+  try {
     const a = await readJSON(ADMIN_FILE) || {};
     if ((!a || !a.email) && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
       const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
       await writeJSON(ADMIN_FILE, { email: process.env.ADMIN_EMAIL, hash });
       console.log('Admin created from .env');
     }
-  }catch(e){ console.error('Error ensuring admin from env', e); }
+  } catch (e) { console.error('Error ensuring admin from env', e); }
 })();
 
 async function readJSON(file) {
@@ -138,8 +150,27 @@ async function writeJSON(file, data) {
 
 // --- Optional MongoDB setup (falls back to JSON files) ---
 let useDb = false;
-const productSchema = new mongoose.Schema({ id: Number, brand: String, name: String, price: Number, currency: { type: String, default: 'USD' }, images: [String], description: String }, { timestamps: true });
-const orderSchema = new mongoose.Schema({ id: Number, product: Object, name: String, phone: String, email: String, address: String, date: Date, status: String }, { timestamps: true });
+const productSchema = new mongoose.Schema({
+  id: Number,
+  brand: String,
+  name: String,
+  price: Number,
+  currency: { type: String, default: 'USD' },
+  images: [String],
+  description: String,
+  status: { type: String, default: 'active' } // active, safe (hidden)
+}, { timestamps: true });
+
+const orderSchema = new mongoose.Schema({
+  id: Number,
+  product: Object,
+  name: String,
+  phone: String,
+  email: String,
+  address: String,
+  date: Date,
+  status: String
+}, { timestamps: true });
 
 let Product, Order;
 async function initDb() {
@@ -200,7 +231,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "jK93uQf7xLzPz2FhG8rWs0aTnE5qYp9v",
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'strict',
@@ -255,12 +286,14 @@ app.get("/api/products", async (req, res) => {
   const brand = req.query.brand;
   try {
     if (useDb) {
-      const q = {};
+      const q = { status: 'active' };
       if (brand) q.brand = new RegExp('^' + brand + '$', 'i');
       const products = await Product.find(q).sort({ createdAt: -1 }).lean();
       return res.json(products);
     }
-    const products = await readJSON(PRODUCTS_FILE) || [];
+    let products = await readJSON(PRODUCTS_FILE) || [];
+    // Filter by active status
+    products = products.filter(p => p.status === 'active' || !p.status); // Default to active if undefined for legacy
     if (brand) return res.json(products.filter(p => p.brand && p.brand.toLowerCase() === brand.toLowerCase()));
     return res.json(products);
   } catch (e) {
@@ -289,7 +322,7 @@ app.get("/api/products/:id", async (req, res) => {
 
 // orders
 app.post("/api/orders", async (req, res) => {
-  const { name, phone, address, email, productId } = req.body;
+  const { name, phone, address, email, productId, note } = req.body;
   if (!name || !phone || !address || !productId) return res.status(400).json({ error: "Missing fields" });
   try {
     let product = { id: productId, name: 'Unknown' };
@@ -298,7 +331,7 @@ app.post("/api/orders", async (req, res) => {
       const orderDoc = {
         id: Date.now(),
         product: { id: product.id, name: product.name, price: product.price },
-        name, phone, email: email || "", address, date: new Date(), status: "Pending"
+        name, phone, email: email || "", address, note: note || "", date: new Date(), status: "Pending"
       };
       await Order.create(orderDoc);
       var order = orderDoc;
@@ -309,30 +342,30 @@ app.post("/api/orders", async (req, res) => {
       const orderObj = {
         id: Date.now(),
         product: { id: product.id, name: product.name, price: product.price },
-        name, phone, email: email || "", address, date: new Date().toISOString(), status: "Pending"
+        name, phone, email: email || "", address, note: note || "", date: new Date().toISOString(), status: "Pending"
       };
       orders.unshift(orderObj);
       await writeJSON(ORDERS_FILE, orders);
       var order = orderObj;
     }
 
-  // send email to admin
-  const adminEmail = process.env.ADMIN_EMAIL || "carryluxe3@gmail.com";
-  const mailOptions = {
-    from: process.env.SMTP_FROM || `CarryLuxe <no-reply@carryluxe.local>`,
-    to: adminEmail,
-    subject: `CarryLuxe - New Order #${order.id}`,
-    text: `New order received:\\n\\nOrder ID: ${order.id}\\nProduct: ${order.product.name}\\nPrice: ${order.product.price}\\nName: ${order.name}\\nEmail: ${order.email}\\nPhone: ${order.phone}\\nAddress: ${order.address}\\nDate: ${order.date}`
-  };
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Order email sent:", info.messageId);
-    if (nodemailer.getTestMessageUrl(info)) console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
-  } catch (e) {
-    console.error("Email error:", e);
-  }
+    // send email to admin
+    const adminEmail = process.env.ADMIN_EMAIL || "carryluxe3@gmail.com";
+    const mailOptions = {
+      from: process.env.SMTP_FROM || `CarryLuxe <no-reply@carryluxe.local>`,
+      to: adminEmail,
+      subject: `CarryLuxe - New Order #${order.id}`,
+      text: `New order received:\n\nOrder ID: ${order.id}\nProduct: ${order.product.name}\nPrice: ${order.product.price}\nName: ${order.name}\nEmail: ${order.email}\nPhone: ${order.phone}\nAddress: ${order.address}\nNote: ${order.note}\nDate: ${order.date}`
+    };
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Order email sent:", info.messageId);
+      if (nodemailer.getTestMessageUrl(info)) console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
+    } catch (e) {
+      console.error("Email error:", e);
+    }
 
-  res.json({ success: true, order });
+    res.json({ success: true, order });
   } catch (e) {
     console.error('Order creation failed', e);
     res.status(500).json({ error: 'Server error' });
@@ -361,9 +394,12 @@ app.post("/api/admin/setup", async (req, res) => {
 
 app.post("/api/admin/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log('Login attempt:', { email, password }); // DEBUG
   const admin = await getAdmin();
+  console.log('Admin found:', admin); // DEBUG
   if (!admin || !admin.email) return res.status(400).json({ error: "Admin not set up" });
   const ok = await bcrypt.compare(password, admin.hash);
+  console.log('Password match:', ok); // DEBUG
   if (!ok || email !== admin.email) return res.status(401).json({ error: "Invalid" });
   req.session.isAdmin = true;
   res.json({ success: true });
@@ -393,48 +429,61 @@ app.get("/api/admin/products", ensureAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/products", ensureAdmin, upload.single('image'), async (req, res) => {
+app.post("/api/admin/products", ensureAdmin, upload.array('images', 5), async (req, res) => {
   try {
-    const { brand, name, price, description } = req.body;
+    const { brand, name, price, description, status } = req.body;
     const images = [];
-    // handle uploaded image: Cloudinary if configured, else write to local uploads dir
-    if (req.file) {
-      try {
-        if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) {
-          const url = await uploadBufferToCloudinary(req.file.buffer, req.file.originalname);
-          images.push(url);
-        } else {
-          const ext = path.extname(req.file.originalname).toLowerCase() || '';
-          const safeName = path.basename(req.file.originalname, ext).replace(/[^a-z0-9]/gi, '-').toLowerCase();
-          const filename = `${safeName}-${Date.now()}${ext}`;
-          await fs.writeFile(path.join(UPLOADS_DIR, filename), req.file.buffer);
-          images.push('/uploads/' + filename);
+
+    // Handle uploaded files
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) {
+            const url = await uploadBufferToCloudinary(file.buffer, file.originalname);
+            images.push(url);
+          } else {
+            const ext = path.extname(file.originalname).toLowerCase() || '';
+            const safeName = path.basename(file.originalname, ext).replace(/[^a-z0-9]/gi, '-').toLowerCase();
+            const filename = `${safeName}-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+            await fs.writeFile(path.join(UPLOADS_DIR, filename), file.buffer);
+            images.push('/uploads/' + filename);
+          }
+        } catch (e) {
+          console.error('Image upload failed', e);
         }
-      } catch (e) {
-        console.error('Image upload failed', e);
       }
     }
-    // support images passed as JSON or comma separated string
-    if (req.body.images) {
+
+    // support images passed as JSON or comma separated string (for additional URLs)
+    if (req.body.imageUrls) {
       try {
-        const imgs = JSON.parse(req.body.images);
+        const imgs = JSON.parse(req.body.imageUrls);
         if (Array.isArray(imgs)) images.push(...imgs.map(s => String(s)).slice(0, 10));
       } catch (e) {
-        const imgs = String(req.body.images).split(',').map(s => s.trim()).filter(Boolean);
+        const imgs = String(req.body.imageUrls).split(',').map(s => s.trim()).filter(Boolean);
         images.push(...imgs.slice(0, 10));
       }
     }
+
+    const productData = {
+      brand,
+      name,
+      price: Number(price || 0),
+      description: description || '',
+      images,
+      status: status || 'active'
+    };
+
     if (useDb) {
-      // use timestamp id for uniqueness
       const id = Date.now();
       if (!brand || !name) return res.status(400).json({ error: 'Missing fields' });
-      const product = await Product.create({ id, brand, name, price: Number(price || 0), description: description || '', images });
+      const product = await Product.create({ id, ...productData });
       return res.json({ success: true, product });
     } else {
       const products = await readJSON(PRODUCTS_FILE) || [];
       if (products.length >= 50) return res.status(400).json({ error: "Product limit reached (50)" });
       const id = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
-      const product = { id, brand, name, price: Number(price), description: description || "", images };
+      const product = { id, ...productData };
       products.unshift(product);
       await writeJSON(PRODUCTS_FILE, products);
       return res.json({ success: true, product });
@@ -445,18 +494,60 @@ app.post("/api/admin/products", ensureAdmin, upload.single('image'), async (req,
   }
 });
 
-app.put("/api/admin/products/:id", ensureAdmin, async (req, res) => {
+app.put("/api/admin/products/:id", ensureAdmin, upload.array('images', 5), async (req, res) => {
   const id = Number(req.params.id);
   try {
+    const { brand, name, price, description, status, existingImages } = req.body;
+
+    // Start with existing images that were kept
+    let images = [];
+    if (existingImages) {
+      try {
+        const kept = JSON.parse(existingImages);
+        if (Array.isArray(kept)) images = kept;
+      } catch (e) {
+        images = [existingImages];
+      }
+    }
+
+    // Add new files
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) {
+            const url = await uploadBufferToCloudinary(file.buffer, file.originalname);
+            images.push(url);
+          } else {
+            const ext = path.extname(file.originalname).toLowerCase() || '';
+            const safeName = path.basename(file.originalname, ext).replace(/[^a-z0-9]/gi, '-').toLowerCase();
+            const filename = `${safeName}-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+            await fs.writeFile(path.join(UPLOADS_DIR, filename), file.buffer);
+            images.push('/uploads/' + filename);
+          }
+        } catch (e) {
+          console.error('Image upload failed', e);
+        }
+      }
+    }
+
+    const updateData = {
+      brand, name, price: Number(price), description, status, images
+    };
+
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
     if (useDb) {
-      const updated = await Product.findOneAndUpdate({ id }, { $set: req.body }, { new: true }).lean();
+      const updated = await Product.findOneAndUpdate({ id }, { $set: updateData }, { new: true }).lean();
       if (!updated) return res.status(404).json({ error: 'Not found' });
       return res.json({ success: true, product: updated });
     }
+
     const products = await readJSON(PRODUCTS_FILE) || [];
     const idx = products.findIndex(p => p.id === id);
     if (idx === -1) return res.status(404).json({ error: "Not found" });
-    const updated = { ...products[idx], ...req.body };
+
+    const updated = { ...products[idx], ...updateData };
     products[idx] = updated;
     await writeJSON(PRODUCTS_FILE, products);
     res.json({ success: true, product: updated });
@@ -502,6 +593,10 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`CarryLuxe server started on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`CarryLuxe server started on port ${PORT}`);
+  });
+}
+
+module.exports = app;

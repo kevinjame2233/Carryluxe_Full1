@@ -1,12 +1,27 @@
 [
   {
+    "id": 3,
+    "brand": "Hermès",
+    "name": "mmmmm",
+    "price": 6736,
+    "description": "gsytehiuhqeyughu",
+    "images": [
+      "https://via.placeholder.com/300"
+    ],
+    "status": "active"
+  },
+  {
     "id": 1,
     "brand": "Hermès",
     "name": "Birkin 30",
     "price": 9500,
     "currency": "USD",
-    "images": ["/assets/images/hermes-birkin.jpg"],
-    "description": "Classic Hermès Birkin 30"
+    "images": [
+      "/assets/images/hermes-birkin.jpg",
+      "/uploads/louis-vuitton-multipass--m27825-pm1-back-view-1763735667415-80086949.avif"
+    ],
+    "description": "Classic Hermès Birkin 30",
+    "status": "active"
   },
   {
     "id": 2,
@@ -14,7 +29,9 @@
     "name": "Capucines MM",
     "price": 6800,
     "currency": "USD",
-    "images": ["/assets/images/lv-capucines.jpg"],
+    "images": [
+      "/assets/images/lv-capucines.jpg"
+    ],
     "description": "Elegant Louis Vuitton Capucines"
   }
 ]

@@ -1,52 +1,77 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>CarryLuxe – Luxury Bags</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
+
 <body>
   <header class="header">
-    <div class="brand">CarryLuxe</div>
-    <nav class="nav">
-      <button id="btn-hermes" class="nav-btn">Hermès</button>
-      <button id="btn-lv" class="nav-btn">Louis Vuitton</button>
-      <a href="/admin.html" class="nav-link">Admin</a>
+    <a href="/" class="brand">CarryLuxe</a>
+    <nav>
+      <a href="#product-grid">Collections</a>
+      <a href="/admin.html">Admin</a>
     </nav>
   </header>
 
   <section class="hero">
-    <img class="hero-img" src="/assets/images/hero1.jpg" alt="hero">
+    <div class="hero-slide active">
+      <img src="/mnt/data/A_digital_graphic_slide_features_a_dark,_textured_.png" alt="Luxury Bag">
+    </div>
     <div class="hero-overlay">
       <h1>Curated Luxury, Carried with Elegance</h1>
-      <div class="hero-ctas">
-        <button id="hermes-btn" class="cta">Shop Hermès</button>
-        <button id="lv-btn" class="cta">Shop Louis Vuitton</button>
-      </div>
+      <p>Discover our exclusive collection of authentic vintage handbags.</p>
+      <a href="#product-grid" class="cta-btn">Shop Collection</a>
     </div>
   </section>
 
   <main class="container">
     <h2>Collections</h2>
+
+    <div class="filters" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <input type="text" id="search-input" placeholder="Search products..."
+        style="padding:10px;border-radius:6px;border:1px solid #333;background:#111;color:#fff;flex:1">
+      <select id="brand-filter" style="padding:10px;border-radius:6px;border:1px solid #333;background:#111;color:#fff">
+        <option value="">All Brands</option>
+        <option value="Hermès">Hermès</option>
+        <option value="Louis Vuitton">Louis Vuitton</option>
+        <option value="Chanel">Chanel</option>
+        <option value="Dior">Dior</option>
+        <option value="Gucci">Gucci</option>
+      </select>
+      <select id="price-filter" style="padding:10px;border-radius:6px;border:1px solid #333;background:#111;color:#fff">
+        <option value="">Any Price</option>
+        <option value="0-5000">Under $5,000</option>
+        <option value="5000-10000">$5,000 - $10,000</option>
+        <option value="10000+">Over $10,000</option>
+      </select>
+    </div>
+
     <div id="product-grid" class="grid"></div>
   </main>
 
-  <div id="order-modal" class="modal hidden">
+  <div id="quick-view-modal" class="modal">
     <div class="modal-content">
-      <h3>Place Order</h3>
-      <form id="order-form">
-        <input type="hidden" name="productId" id="productId">
-        <input name="name" placeholder="Full name" required>
-        <input name="phone" placeholder="Phone" required>
-        <input name="email" placeholder="Email (optional)">
-        <textarea name="address" placeholder="Delivery address" required></textarea>
-        <div class="modal-actions">
-          <button type="button" id="cancel-order" class="btn">Cancel</button>
-          <button type="submit" class="btn primary">Submit Order</button>
-        </div>
-      </form>
+      <span class="modal-close">&times;</span>
+      <div class="qv-gallery">
+        <img id="qv-img" src="" alt="Product">
+      </div>
+      <div class="qv-details">
+        <div id="qv-brand" class="qv-brand"></div>
+        <h2 id="qv-name" class="qv-title"></h2>
+        <div id="qv-price" class="qv-price"></div>
+        <p id="qv-desc" class="qv-desc"></p>
+        <a id="qv-buy" href="#" class="btn primary" style="text-align:center;text-decoration:none;display:block">Buy
+          Now</a>
+      </div>
     </div>
+  </div>
+
+  <div id="order-modal" class="modal hidden" style="display:none">
+    <!-- Legacy modal kept hidden/removed -->
   </div>
 
   <div id="popup-container"></div>
@@ -54,4 +79,5 @@
   <footer class="footer">© CarryLuxe • Demo</footer>
   <script src="/assets/js/main.js"></script>
 </body>
+
 </html>
