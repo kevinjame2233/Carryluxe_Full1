@@ -198,7 +198,8 @@ async function ensureData() {
 ensureData();
 
 // create admin from env if provided and admin not set
-(async function ensureAdminFromEnv() {
+// create admin from env if provided and admin not set
+async function ensureAdminFromEnv() {
   try {
     const a = await readJSON(ADMIN_FILE) || {};
     if ((!a || !a.email) && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
@@ -207,7 +208,7 @@ ensureData();
       console.log('Admin created from .env');
     }
   } catch (e) { console.error('Error ensuring admin from env', e); }
-})();
+}
 
 async function readJSON(file) {
   try {
@@ -661,15 +662,29 @@ app.get("/api/admin/orders", ensureAdmin, async (req, res) => {
   }
 });
 
+// Health check
+app.get("/api/health", async (req, res) => {
+  const admin = await getAdmin();
+  res.json({
+    status: "ok",
+    adminConfigured: !!(admin && admin.email),
+    db: useDb ? "mongo" : "json",
+    env: process.env.NODE_ENV
+  });
+});
+
 // fallback to index.html for SPA behavior
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`CarryLuxe server started on port ${PORT}`);
-  });
+  (async () => {
+    await ensureAdminFromEnv();
+    app.listen(PORT, () => {
+      console.log(`CarryLuxe server started on port ${PORT}`);
+    });
+  })();
 }
 
 module.exports = app;
