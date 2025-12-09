@@ -449,7 +449,15 @@ app.post("/api/orders", async (req, res) => {
 // ---------- Admin & Auth ---------- //
 async function getAdmin() {
   const a = await readJSON(ADMIN_FILE) || {};
-  return a;
+  if (a && a.email) return a;
+
+  // Fallback to Env (Stateless for Vercel)
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    // Hash on the fly to ensure it matches the bcrypt.compare expectation
+    const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+    return { email: process.env.ADMIN_EMAIL, hash };
+  }
+  return {};
 }
 
 app.post("/api/admin/setup", async (req, res) => {
