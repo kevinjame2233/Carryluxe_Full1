@@ -54,13 +54,18 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-const DATA_DIR = path.join(__dirname, "data");
+const IS_VERCEL = process.env.VERCEL === '1';
+
+// On Vercel, we must use /tmp for writing. 
+// Note: /tmp is ephemeral. Use MongoDB/Cloudinary for persistence.
+const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, "data");
 const PRODUCTS_FILE = path.join(DATA_DIR, "products.json");
 const ORDERS_FILE = path.join(DATA_DIR, "orders.json");
 const ADMIN_FILE = path.join(DATA_DIR, "admin.json");
-const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+const UPLOADS_DIR = IS_VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'public', 'uploads');
 
-// ensure uploads dir exists
+// ensure dirs exist
+if (!fsSync.existsSync(DATA_DIR)) fsSync.mkdirSync(DATA_DIR, { recursive: true });
 if (!fsSync.existsSync(UPLOADS_DIR)) fsSync.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // File upload configuration: prefer memory uploads so we can forward to Cloudinary if configured
@@ -89,31 +94,49 @@ if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) {
 async function ensureData() {
   if (!fsSync.existsSync(DATA_DIR)) fsSync.mkdirSync(DATA_DIR);
   if (!fsSync.existsSync(PRODUCTS_FILE)) {
-    const sample = [
-      {
-        "id": 1,
-        "brand": "Hermès",
-        "name": "Birkin 30",
-        "price": 9500,
-        "stock": 1,
-        "currency": "USD",
-        "images": ["/assets/images/hermes-birkin.jpg"],
-        "description": "Classic Hermès Birkin 30",
-        "status": "active"
-      },
-      {
-        "id": 2,
-        "brand": "Louis Vuitton",
-        "name": "Capucines MM",
-        "price": 6800,
-        "stock": 1,
-        "currency": "USD",
-        "images": ["/assets/images/lv-capucines.jpg"],
-        "description": "Elegant Louis Vuitton Capucines",
-        "status": "active"
+    // If on Vercel, try to copy from source 'data/products.json' first
+    let copied = false;
+    if (IS_VERCEL) {
+      try {
+        const sourcePath = path.join(__dirname, 'data', 'products.json');
+        if (fsSync.existsSync(sourcePath)) {
+          const data = fsSync.readFileSync(sourcePath);
+          fsSync.writeFileSync(PRODUCTS_FILE, data);
+          copied = true;
+          console.log('Copied initial products from source to /tmp');
+        }
+      } catch (e) {
+        console.error('Failed to copy source products:', e);
       }
-    ];
-    await fs.writeFile(PRODUCTS_FILE, JSON.stringify(sample, null, 2));
+    }
+
+    if (!copied) {
+      const sample = [
+        {
+          "id": 1,
+          "brand": "Hermès",
+          "name": "Birkin 30",
+          "price": 9500,
+          "stock": 1,
+          "currency": "USD",
+          "images": ["/assets/images/hermes-birkin.jpg"],
+          "description": "Classic Hermès Birkin 30",
+          "status": "active"
+        },
+        {
+          "id": 2,
+          "brand": "Louis Vuitton",
+          "name": "Capucines MM",
+          "price": 6800,
+          "stock": 1,
+          "currency": "USD",
+          "images": ["/assets/images/lv-capucines.jpg"],
+          "description": "Elegant Louis Vuitton Capucines",
+          "status": "active"
+        }
+      ];
+      await fs.writeFile(PRODUCTS_FILE, JSON.stringify(sample, null, 2));
+    }
   }
   if (!fsSync.existsSync(ORDERS_FILE)) {
     await fs.writeFile(ORDERS_FILE, "[]");
