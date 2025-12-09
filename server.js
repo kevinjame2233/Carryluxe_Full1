@@ -116,12 +116,13 @@ async function ensureData() {
           "id": 1,
           "brand": "Hermès",
           "name": "Birkin 30",
-          "price": 9500,
+          "price": 12500,
           "stock": 1,
           "currency": "USD",
           "images": ["/assets/images/hermes-birkin.jpg"],
-          "description": "Classic Hermès Birkin 30",
-          "status": "active"
+          "description": "Classic Hermès Birkin 30 in Gold Togo leather with Gold hardware. Pristine condition.",
+          "status": "active",
+          "authenticity": "Verified Authentic"
         },
         {
           "id": 2,
@@ -131,8 +132,57 @@ async function ensureData() {
           "stock": 1,
           "currency": "USD",
           "images": ["/assets/images/lv-capucines.jpg"],
-          "description": "Elegant Louis Vuitton Capucines",
-          "status": "active"
+          "description": "Elegant Louis Vuitton Capucines in Black Taurillon leather. Includes strap and dustbag.",
+          "status": "active",
+          "authenticity": "Verified Authentic"
+        },
+        {
+          "id": 3,
+          "brand": "Chanel",
+          "name": "Classic Flap Medium",
+          "price": 10200,
+          "stock": 1,
+          "currency": "USD",
+          "images": ["https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=800&q=80"],
+          "description": "Timeless Chanel Classic Double Flap in Black Caviar leather with Gold hardware.",
+          "status": "active",
+          "authenticity": "Certified Original"
+        },
+        {
+          "id": 4,
+          "brand": "Dior",
+          "name": "Lady Dior Medium",
+          "price": 5900,
+          "stock": 1,
+          "currency": "USD",
+          "images": ["https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&w=800&q=80"],
+          "description": "Iconic Lady Dior in Cannage Lambskin. Excellent condition with card.",
+          "status": "active",
+          "authenticity": "Verified Authentic"
+        },
+        {
+          "id": 5,
+          "brand": "Gucci",
+          "name": "Jackie 1961 Small",
+          "price": 2950,
+          "stock": 2,
+          "currency": "USD",
+          "images": ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80"],
+          "description": "The signature Gucci Jackie 1961 in GG Supreme canvas.",
+          "status": "active",
+          "authenticity": "Verified Authentic"
+        },
+        {
+          "id": 6,
+          "brand": "Bottega Veneta",
+          "name": "Cassette Bag",
+          "price": 3200,
+          "stock": 1,
+          "currency": "USD",
+          "images": ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=800&q=80"],
+          "description": "Padded Cassette in signature Intrecciato weave. Parakeet Green.",
+          "status": "active",
+          "authenticity": "Verified Authentic"
         }
       ];
       await fs.writeFile(PRODUCTS_FILE, JSON.stringify(sample, null, 2));
