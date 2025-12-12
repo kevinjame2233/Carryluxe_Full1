@@ -681,6 +681,19 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
+// Debug endpoint to check env vars (safe version)
+app.get("/api/debug-config", (req, res) => {
+  res.json({
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL ? "Set" : "Missing",
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ? "Set" : "Missing",
+    MONGODB_URI: process.env.MONGODB_URI ? "Set" : "Missing",
+    NODE_ENV: process.env.NODE_ENV,
+    // Check if admin file exists and has content
+    adminFileExists: fsSync.existsSync(ADMIN_FILE),
+    adminFileContent: fsSync.existsSync(ADMIN_FILE) ? "Present" : "Empty"
+  });
+});
+
 // fallback to index.html for SPA behavior
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
